@@ -11,4 +11,10 @@ index=win_security EventCode=4769 NOT (Service_Name="krbtgt" OR Service_Name="*$
        mitre_id="T1558.003",
        severity=if(rc4_detected=1, "high", "medium"),
        event_time=strftime(first_seen, "%Y-%m-%d %H:%M:%S")
+| join type=left user [
+    search index=win_security EventCode=4769 earliest=-24h
+      NOT (Service_Name="krbtgt" OR Service_Name="*$" OR Account_Name="*$@*")
+    | eval user=lower(replace(Account_Name,"@.*",""))
+    | stats count as tgs_24h dc(Service_Name) as spns_24h by user ]
+| fillnull value=0 tgs_24h spns_24h
 | table alert_name mitre_id severity user host src_ip service event_time raw_event
