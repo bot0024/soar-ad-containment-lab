@@ -1,0 +1,1194 @@
+{
+  "schema_version": 31,
+  "standard_lib_version": 98,
+  "action_runtime_version": 93,
+  "name": "Your first story",
+  "description": null,
+  "guid": "2cab8481e015695d532fb139f9e408e8",
+  "slug": "your_first_story",
+  "agents": [
+    {
+      "type": "Agents::WebhookAgent",
+      "name": "Webhook",
+      "disabled": false,
+      "description": null,
+      "guid": "87289b41cae4bb3eb307aac878619729",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "path": "your-first-story",
+        "secret": "<<WEBHOOK_SECRET>>",
+        "verbs": "get,post"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EmailAgent",
+      "name": "Send Email",
+      "disabled": false,
+      "description": null,
+      "guid": "13a77f4f95ab69e59f5007884c7c1a05",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "recipients": [],
+        "reply_to": "",
+        "sender_name": "Bot Hacks",
+        "subject": "Kerberoasting Alert: <<webhook.body.result.ServiceName>>",
+        "body": "A Kerberoasting attack was detected!\r\n\r\nTargeted Service: <<webhook.body.result.ServiceName>>\r\n\n\nAttacker IP: <<webhook.body.result.IpAddress>>\r\n\nRequesting User: <<webhook.body.result.TargetUserName>>\r\n\nEncryption Type: <<webhook.body.result.TicketEncryptionType>>\r\n\nDomain Controller: <<webhook.body.result.Computer>>",
+        "advanced_html": true,
+        "cc": [],
+        "bcc": [],
+        "sender_address": ""
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "wazuh_auth",
+      "disabled": false,
+      "description": null,
+      "guid": "9a123e60a83db193b8b33facb848637b",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-TUNNEL.trycloudflare.com/user/authenticate",
+        "content_type": "application_json",
+        "method": "post",
+        "headers": {
+          "Authorization": "Basic <<WAZUH_BASIC_AUTH_BASE64>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "wazuh_disable_user",
+      "disabled": false,
+      "description": null,
+      "guid": "3f4d0a5e2523513c2d4a14bd740268f3",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-TUNNEL.trycloudflare.com/active-response?agents_list=001",
+        "content_type": "application_json",
+        "method": "put",
+        "payload": {
+          "command": "!disable-ad-user.cmd",
+          "arguments": [
+            "<<webhook.body.result.user>>"
+          ]
+        },
+        "headers": {
+          "Authorization": "Bearer <<wazuh_auth.body.data.token>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_Kerberoasting",
+      "disabled": false,
+      "description": null,
+      "guid": "9c62169d809b18493eefd520d1fa27a5",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "Kerberoasting",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Not_Protected_Account",
+      "disabled": false,
+      "description": null,
+      "guid": "d48202549805902992d3fa8e35c5c572",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "path": "<<webhook.body.result.alert_name>>",
+            "type": "!regex",
+            "value": "^(Pass-the-Hash|LSASS/SAM Credential Dumping|Suspicious Encoded/Download PowerShell|Suspicious Scheduled Task Created|Suspicious Service Installation \\(Lateral Movement\\))$"
+          },
+          {
+            "path": "<<webhook.body.result.user>>",
+            "type": "!regex",
+            "value": "^(administrator|krbtgt|guest|svc_sql|svc_lab)$"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Create_Jira_Incident",
+      "disabled": false,
+      "description": null,
+      "guid": "4f6ef53af6d14586f263b22b478104c7",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-DOMAIN.atlassian.net/rest/api/2/issue",
+        "content_type": "json",
+        "method": "post",
+        "payload": {
+          "fields": {
+            "project": {
+              "key": "SOC"
+            },
+            "summary": "<<UPCASE(webhook.body.result.severity)>>: <<webhook.body.result.alert_name>> - <<webhook.body.result.user>>",
+            "description": "Automated SOC Alert\n\n*Alert:* <<webhook.body.result.alert_name>> (<<webhook.body.result.mitre_id>>)\n*Severity:* <<webhook.body.result.severity>>\n*Account:* <<webhook.body.result.user>>\n*Service requested:* <<webhook.body.result.service>>\n*Source IP:* <<webhook.body.result.src_ip>>\n*Host (DC):* <<webhook.body.result.host>>\n*Time:* <<webhook.body.result.event_time>>\n\n*Threat Intel Enrichment*\n*VirusTotal:* malicious=<<DEFAULT(virustotal_ip.body.data.attributes.last_analysis_stats.malicious, \"n/a\")>> suspicious=<<DEFAULT(virustotal_ip.body.data.attributes.last_analysis_stats.suspicious, \"n/a\")>> harmless=<<DEFAULT(virustotal_ip.body.data.attributes.last_analysis_stats.harmless, \"n/a\")>>\n*VT owner / country:* <<DEFAULT(virustotal_ip.body.data.attributes.as_owner, \"n/a\")>> / <<DEFAULT(virustotal_ip.body.data.attributes.country, \"n/a\")>>\n*AbuseIPDB:* confidence=<<DEFAULT(abuseipdb_ip.body.data.abuseConfidenceScore, \"n/a\")>>% reports=<<DEFAULT(abuseipdb_ip.body.data.totalReports, \"n/a\")>> ISP=<<DEFAULT(abuseipdb_ip.body.data.isp, \"n/a\")>> country=<<DEFAULT(abuseipdb_ip.body.data.countryCode, \"n/a\")>>\n\n*Internal Context (last 24h)*\n<<DEFAULT(webhook.body.result.context, \"n/a\")>>\n*Distinct services requested:* <<DEFAULT(webhook.body.result.spns_24h, \"n/a\")>>\n_n/a means the source IP is internal or the lookup failed._",
+            "issuetype": {
+              "name": "Task"
+            },
+            "priority": {
+              "name": "High"
+            },
+            "labels": [
+              "Splunk-Alert",
+              "ActiveDirectory",
+              "<<REPLACE(webhook.body.result.mitre_id, \".\", \"_\")>>"
+            ]
+          }
+        },
+        "basic_auth": [
+          "<<YOUR_EMAIL>>",
+          "<<CREDENTIAL.jira_api_token>>"
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Add Jira Comment",
+      "disabled": false,
+      "description": null,
+      "guid": "20eb6914ddc15043df7cb4df7c4957a0",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-DOMAIN.atlassian.net/rest/api/2/issue/<<create_jira_incident.body.key>>/comment",
+        "content_type": "json",
+        "method": "post",
+        "payload": {
+          "body": "SOAR triage complete for <<webhook.body.result.user>>. Evaluating automated containment."
+        },
+        "basic_auth": [
+          "<<YOUR_EMAIL>>",
+          "<<CREDENTIAL.jira_api_token>>"
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "HTTP Request",
+      "disabled": false,
+      "description": null,
+      "guid": "bdad3a90383b1a33df530f5d24cbb4e9",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-TINES-TENANT.tines.com/example-echo",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "key": "value",
+          "array_example": [
+            "foo",
+            "bar"
+          ],
+          "object_example": {
+            "key": "value"
+          }
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Jira_Containment_Result",
+      "disabled": false,
+      "description": null,
+      "guid": "b3824be8c7d2065a2ab77148ffd479f8",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-DOMAIN.atlassian.net/rest/api/2/issue/<<create_jira_incident.body.key>>/comment",
+        "content_type": "json",
+        "method": "post",
+        "payload": {
+          "body": "Containment action sent to Wazuh for <<webhook.body.result.user>>. API response status: <<wazuh_disable_user.status>>."
+        },
+        "basic_auth": [
+          "<<YOUR_EMAIL>>",
+          "<<CREDENTIAL.jira_api_token>>"
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_Public_IP",
+      "disabled": false,
+      "description": null,
+      "guid": "3550a06138acb582f01cd1e278a66d80",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "!regex",
+            "value": "^(10[.]|192[.]168[.]|172[.](1[6-9]|2[0-9]|3[0-1])[.]|127[.]|169[.]254[.])",
+            "path": "<<webhook.body.result.src_ip>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_Private_IP",
+      "disabled": false,
+      "description": null,
+      "guid": "a6582c3124695a0aeafe781b81b0752a",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "regex",
+            "value": "^(10[.]|192[.]168[.]|172[.](1[6-9]|2[0-9]|3[0-1])[.]|127[.]|169[.]254[.])",
+            "path": "<<webhook.body.result.src_ip>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "VirusTotal_IP",
+      "disabled": false,
+      "description": null,
+      "guid": "5681075b8b32b1ce351a5be42a0bb5a3",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://www.virustotal.com/api/v3/ip_addresses/<<webhook.body.result.src_ip>>",
+        "content_type": "json",
+        "method": "get",
+        "headers": {
+          "x-apikey": "<<CREDENTIAL.virustotal>>"
+        },
+        "emit_failure_event": true
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "AbuseIPDB_IP",
+      "disabled": false,
+      "description": null,
+      "guid": "08a08e50c96b6dbd078c88db6a5c3ada",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://api.abuseipdb.com/api/v2/check?ipAddress=<<webhook.body.result.src_ip>>&maxAgeInDays=90",
+        "content_type": "json",
+        "method": "get",
+        "headers": {
+          "Key": "<<CREDENTIAL.abuseipdb>>",
+          "Accept": "application/json"
+        },
+        "emit_failure_event": true
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_ASREP",
+      "disabled": false,
+      "description": null,
+      "guid": "cfbb0814d549b8990e4f4d77ddeeac4d",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "AS-REP Roasting",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_PasswordSpray",
+      "disabled": false,
+      "description": null,
+      "guid": "becee47b041e3ae2f28b71592995ebfc",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "Password Spraying",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "block_ip",
+      "disabled": false,
+      "description": null,
+      "guid": "67512e9ec7bc151cd492852c4bbf6df1",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-TUNNEL.trycloudflare.com/active-response?agents_list=001",
+        "content_type": "application_json",
+        "method": "put",
+        "payload": {
+          "command": "!block-ip.cmd",
+          "arguments": [
+            "<<webhook.body.result.src_ip>>"
+          ]
+        },
+        "headers": {
+          "Authorization": "Bearer <<wazuh_auth.body.data.token>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Jira_Containment_Result",
+      "disabled": false,
+      "description": null,
+      "guid": "242a81217eea8ec5e2da96cf4ffe858b",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-DOMAIN.atlassian.net/rest/api/2/issue/<<create_jira_incident.body.key>>/comment",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "body": "Containment action sent to Wazuh: blocked source IP <<webhook.body.result.src_ip>>. API response status: <<block_ip.status>>."
+        },
+        "basic_auth": [
+          "<<YOUR_EMAIL>>",
+          "<<CREDENTIAL.jira_api_token>>"
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_DCSync",
+      "disabled": false,
+      "description": null,
+      "guid": "b5c143c36bcefbc2a43b36e65f18fa39",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "DCSync",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Route_By_Attack_Type",
+      "disabled": false,
+      "description": null,
+      "guid": "6e58f71ae9545a1aeea83337dc1bb321",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "Password Spraying",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Route_To_Disable_User",
+      "disabled": false,
+      "description": null,
+      "guid": "8c72e9a95dbcd2ffdbcb05c96c0e54de",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "path": "<<webhook.body.result.alert_name>>",
+            "type": "!regex",
+            "value": "^(Password Spraying|Pass-the-Hash|LSASS/SAM Credential Dumping|Suspicious Encoded/Download PowerShell|Suspicious Scheduled Task Created|Suspicious Service Installation \\(Lateral Movement\\))$"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_PassTheHash",
+      "disabled": false,
+      "description": null,
+      "guid": "0525b92e633044f588bf7e47ca47ff47",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "Pass-the-Hash",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "isolate_host",
+      "disabled": false,
+      "description": null,
+      "guid": "da2a6d7defc93b351bf9928181444609",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-TUNNEL.trycloudflare.com/active-response?agents_list=003",
+        "content_type": "application_json",
+        "method": "put",
+        "payload": {
+          "command": "!isolate-host.cmd",
+          "arguments": []
+        },
+        "headers": {
+          "Authorization": "Bearer <<wazuh_auth.body.data.token>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Route_To_Isolate_Host",
+      "disabled": false,
+      "description": null,
+      "guid": "a30e7973e21041f3c93cfa6097209802",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "path": "<<webhook.body.result.alert_name>>",
+            "type": "regex",
+            "value": "^(Pass-the-Hash|LSASS/SAM Credential Dumping|Suspicious Encoded/Download PowerShell|Suspicious Scheduled Task Created|Suspicious Service Installation \\(Lateral Movement\\))$"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Jira_Containment_Result",
+      "disabled": false,
+      "description": null,
+      "guid": "82fcb213cc39ea8540520af2f961fb8f",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "url": "https://YOUR-DOMAIN.atlassian.net/rest/api/2/issue/<<create_jira_incident.body.key>>/comment",
+        "content_type": "json",
+        "method": "post",
+        "payload": {
+          "body": "Containment action sent to Wazuh: isolated host <<webhook.body.result.host>>. API response status: <<isolate_host.status>>."
+        },
+        "basic_auth": [
+          "<<YOUR_EMAIL>>",
+          "<<CREDENTIAL.jira_api_token>>"
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Bypass_For_PTH",
+      "disabled": false,
+      "description": null,
+      "guid": "5cadeba6b457a9a8cd7b3362269fdd23",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "path": "<<webhook.body.result.alert_name>>",
+            "type": "regex",
+            "value": "^(Pass-the-Hash|LSASS/SAM Credential Dumping|Suspicious Encoded/Download PowerShell|Suspicious Scheduled Task Created|Suspicious Service Installation \\(Lateral Movement\\))$"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_CredDumping",
+      "disabled": false,
+      "description": null,
+      "guid": "bc3b25075057703ea46af061ce05fda1",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "LSASS/SAM Credential Dumping",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_EncodedPS",
+      "disabled": false,
+      "description": null,
+      "guid": "3fa21f810264ae9a5b4a0e523aa6bcd2",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "Suspicious Encoded/Download PowerShell",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_ScheduledTaskPersist",
+      "disabled": false,
+      "description": null,
+      "guid": "2ce4086b055e800f1ae5dad9136104f8",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "Suspicious Scheduled Task Created",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_RogueAdmin",
+      "disabled": false,
+      "description": null,
+      "guid": "63bc1516fb6c589c7e439b756cb1d967",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "Rogue Privileged Account Creation",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Is_PsExecLateral",
+      "disabled": false,
+      "description": null,
+      "guid": "8c74c30a89d20f06a6ce440552971b59",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "rules": [
+          {
+            "type": "field==value",
+            "value": "Suspicious Service Installation (Lateral Movement)",
+            "path": "<<webhook.body.result.alert_name>>"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Set_Containment_Type",
+      "disabled": false,
+      "description": null,
+      "guid": "48121c83e327a7cdfd153981de6fb47a",
+      "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "containment_type": "<<IF(webhook.body.result.alert_name = \"Password Spraying\", \"block_ip\", IF(webhook.body.result.alert_name = \"Pass-the-Hash\" || webhook.body.result.alert_name = \"LSASS/SAM Credential Dumping\" || webhook.body.result.alert_name = \"Suspicious Encoded/Download PowerShell\" || webhook.body.result.alert_name = \"Suspicious Scheduled Task Created\" || webhook.body.result.alert_name = \"Suspicious Service Installation (Lateral Movement)\", \"isolate_host\", \"disable_user\"))>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    }
+  ],
+  "diagram_notes": [
+    {
+      "content": "hello\n",
+      "position": [
+        -1425,
+        885
+      ],
+      "guid": "ac4bb8df1d215660f73867644cbaec67",
+      "width": 180
+    }
+  ],
+  "links": [
+    { "source": 0, "receiver": 4 },
+    { "source": 0, "receiver": 14 },
+    { "source": 0, "receiver": 15 },
+    { "source": 0, "receiver": 18 },
+    { "source": 0, "receiver": 21 },
+    { "source": 0, "receiver": 26 },
+    { "source": 0, "receiver": 27 },
+    { "source": 0, "receiver": 28 },
+    { "source": 0, "receiver": 29 },
+    { "source": 0, "receiver": 30 },
+    { "source": 2, "receiver": 19 },
+    { "source": 2, "receiver": 20 },
+    { "source": 2, "receiver": 23 },
+    { "source": 3, "receiver": 9 },
+    { "source": 4, "receiver": 10 },
+    { "source": 4, "receiver": 11 },
+    { "source": 5, "receiver": 2 },
+    { "source": 6, "receiver": 7 },
+    { "source": 7, "receiver": 5 },
+    { "source": 7, "receiver": 25 },
+    { "source": 7, "receiver": 31 },
+    { "source": 10, "receiver": 12 },
+    { "source": 11, "receiver": 6 },
+    { "source": 12, "receiver": 13 },
+    { "source": 13, "receiver": 6 },
+    { "source": 14, "receiver": 10 },
+    { "source": 14, "receiver": 11 },
+    { "source": 15, "receiver": 10 },
+    { "source": 15, "receiver": 11 },
+    { "source": 16, "receiver": 17 },
+    { "source": 18, "receiver": 10 },
+    { "source": 18, "receiver": 11 },
+    { "source": 19, "receiver": 16 },
+    { "source": 20, "receiver": 3 },
+    { "source": 21, "receiver": 10 },
+    { "source": 21, "receiver": 11 },
+    { "source": 22, "receiver": 24 },
+    { "source": 23, "receiver": 22 },
+    { "source": 25, "receiver": 2 },
+    { "source": 26, "receiver": 10 },
+    { "source": 26, "receiver": 11 },
+    { "source": 27, "receiver": 10 },
+    { "source": 27, "receiver": 11 },
+    { "source": 28, "receiver": 10 },
+    { "source": 28, "receiver": 11 },
+    { "source": 29, "receiver": 10 },
+    { "source": 29, "receiver": 11 },
+    { "source": 30, "receiver": 10 },
+    { "source": 30, "receiver": 11 }
+  ],
+  "story_library_metadata": {},
+  "monitor_failures": false,
+  "synchronous_webhooks_enabled": false,
+  "integrations": [],
+  "sections": [],
+  "parent_only_send_to_story": false,
+  "send_to_story_timeout_enabled": false,
+  "send_to_story_timeout_duration_seconds": null,
+  "keep_events_for": 604800,
+  "reporting_status": true,
+  "send_to_story_enabled": false,
+  "entry_agent_guid": null,
+  "exit_agent_guids": [],
+  "api_entry_action_guids": [],
+  "api_exit_action_guids": [],
+  "send_to_story_access": null,
+  "send_to_story_access_source": 0,
+  "send_to_story_skill_use_requires_confirmation": true,
+  "pages": [],
+  "tags": [],
+  "time_saved_unit": "minutes",
+  "time_saved_value": 0,
+  "origin_story_identifier": "cloud:41a388a8b447c19dd678970203580ffb:2cab8481e015695d532fb139f9e408e8",
+  "recipients": [],
+  "integration_product": null,
+  "integration_vendor": null,
+  "llm_product_instructions": "",
+  "start_reference": null,
+  "app_endpoints": [],
+  "send_to_stories": [],
+  "exported_at": "2026-10-26T19:25:35Z"
+}

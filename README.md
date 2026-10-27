@@ -11,10 +11,11 @@ pipeline wired to Wazuh active response. Full write-up: [`/docs`](docs).
 | Folder | Contents |
 | --- | --- |
 | [`/docs`](docs) | The full lab report (PDF) and the architecture/network diagram |
-| [`/splunk`](splunk) | The final Splunk search (`.spl`) for each of the 10 detections |
-| [`/tines`](tines) | The Tines story structure, the `Set_Containment_Type` lookup table, and before/after screenshots of the routing rebuild |
-| [`/wazuh`](wazuh) | How the Wazuh active-response side is wired (`disable_user`, `block_ip`, `isolate_host`) |
+| [`/splunk`](splunk) | The final Splunk search (`.spl`) for each of the 10 detections, plus the Universal Forwarder `inputs.conf` files ([`/splunk/inputs`](splunk/inputs)) |
+| [`/tines`](tines) | The Tines story structure, the `Set_Containment_Type` formula, the sanitized story export, and before/after screenshots of the routing rebuild |
+| [`/wazuh`](wazuh) | The Wazuh active-response scripts ([`/wazuh/active-response`](wazuh/active-response): `disable-ad-user`, `block-ip`, `isolate-host`) and how the API flow is wired |
 | [`/screenshots`](screenshots) | Proof-of-work: the Tines story, Splunk detection results, and the Jira tickets it opened |
+| [`/prototype`](prototype) | An early HTTP-listener containment prototype, superseded by the Wazuh scripts (reference only) |
 
 ## Architecture
 
@@ -24,7 +25,7 @@ pipeline wired to Wazuh active response. Full write-up: [`/docs`](docs).
 | Targets | Windows Server 2025 DC — `hackme.local` (`10.0.0.10`) · Windows 10 `DESKTOP-01` (`10.0.0.4`) | Generate Security, Sysmon, PowerShell logs |
 | Collection | Windows Event Forwarding + Sysmon (Olaf's modular config) | Ships logs into Splunk |
 | Detection | Splunk Enterprise, indexes `win_security` / `sysmon` / `powershell` / `wazuh` | One scheduled search per technique, each posting a normalized alert to a webhook |
-| Orchestration | Tines | Classifies the alert, opens/dedupes a Jira incident, decides containment via a single lookup table |
+| Orchestration | Tines | Classifies the alert, opens/dedupes a Jira incident, decides containment in one formula node (`Set_Containment_Type`) |
 | Containment | Wazuh active response (`10.0.0.9`), reached over a `cloudflared` tunnel | Executes `disable_user`, `block_ip`, or `isolate_host` |
 
 All 10 VMs/services sit on one isolated VirtualBox NAT network, `10.0.0.0/24` — this lab was
@@ -54,9 +55,9 @@ alongside it.
 
 Every search posts a normalized JSON payload to the same Tines webhook (`alert_name`,
 `mitre_id`, `severity`, `user`, `host`, `src_ip`, `event_time`) — that shared schema is what
-lets one lookup table route all ten.
+lets one formula node route all ten.
 
-## The engineering story: regex lists → one lookup table
+## The engineering story: regex lists → one formula node
 
 The first version of the Tines story routed containment with a separate regex condition per
 branch — adding an 11th detection meant editing several condition nodes and hoping none were
@@ -64,9 +65,9 @@ missed:
 
 ![Tines story before the rebuild](screenshots/02-tines-story-before-rebuild.png)
 
-That was replaced with a single formula node, `Set_Containment_Type`, holding one lookup table
-(`alert_name → containment_type`). Adding a detection to containment now means adding one row to
-that table — see [`/tines`](tines) for the full before/after and the formula itself:
+That was replaced with a single formula node, `Set_Containment_Type`, holding one mapping
+(`alert_name → containment_type`). Adding a detection to containment now means editing one place instead of several: a new clause in
+that formula — see [`/tines`](tines) for the full before/after, the formula itself, and the sanitized story export:
 
 ![Tines story after the rebuild](screenshots/01-tines-story-after-rebuild.png)
 
@@ -113,7 +114,7 @@ pipeline, not synthetic Tines test events — covering all three containment typ
    each firing every 5 minutes (`*/5 * * * *`) and posting its result to a Tines webhook URL via
    an alert action.
 5. **Build the Tines story.** Webhook in, one condition per `alert_name`, Jira incident
-   creation/dedup, the `Set_Containment_Type` lookup table, and three containment branches —
+   creation/dedup, the `Set_Containment_Type` formula node, and three containment branches —
    see [`/tines`](tines) for the exact wiring.
 6. **Wire Wazuh.** Install the Wazuh agent on the DC and endpoint, write the three
    active-response scripts (`disable-ad-user.cmd`, a firewall-block action, `isolate-host.ps1`),

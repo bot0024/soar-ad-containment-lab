@@ -27,33 +27,46 @@ Webhook
 See [`../screenshots/02-tines-story-before-rebuild.png`](../screenshots/02-tines-story-before-rebuild.png)
 for the original story (separate `Bypass_For_PTH` / `Route_To_*` regex conditions per branch) and
 [`../screenshots/01-tines-story-after-rebuild.png`](../screenshots/01-tines-story-after-rebuild.png)
-for the rebuilt story after the `Set_Containment_Type` lookup table replaced them.
+for the rebuilt story after the `Set_Containment_Type` formula consolidated them.
 
 ## `Set_Containment_Type` (the formula node)
 
-```js
-containment_type = FIND(LOCAL.containment_table, LAMBDA(r, r.alert = webhook.body.result.alert_name)).type
+The exported story ([`your-first-story.json`](your-first-story.json)) implements it as one
+Event Transformation node with a single nested `IF()` formula:
+
+```
+containment_type = IF(alert_name = "Password Spraying", "block_ip",
+  IF(alert_name = "Pass-the-Hash"
+     || alert_name = "LSASS/SAM Credential Dumping"
+     || alert_name = "Suspicious Encoded/Download PowerShell"
+     || alert_name = "Suspicious Scheduled Task Created"
+     || alert_name = "Suspicious Service Installation (Lateral Movement)",
+   "isolate_host",
+   "disable_user"))
 ```
 
-`LOCAL.containment_table` is a local array of `{alert, type}` rows, one per detection:
+Resulting mapping (alert names are the exact `alert_name` strings the Splunk searches emit):
 
-```js
-LOCAL.containment_table = [
-  { alert: "Kerberoasting", type: "disable_user" },
-  { alert: "AS-REP Roasting", type: "disable_user" },
-  { alert: "DCSync", type: "isolate_host" },
-  { alert: "LSASS/SAM Credential Dumping", type: "isolate_host" },
-  { alert: "Pass-the-Hash", type: "disable_user" },
-  { alert: "Suspicious Encoded/Download PowerShell", type: "isolate_host" },
-  { alert: "Suspicious Scheduled Task Created", type: "disable_user" },
-  { alert: "Password Spraying", type: "block_ip" },
-  { alert: "Rogue Admin Account Creation", type: "disable_user" },
-  { alert: "Suspicious Service Installation (Lateral Movement)", type: "isolate_host" }
-]
-```
+| `alert_name` | `containment_type` |
+| --- | --- |
+| Password Spraying | `block_ip` |
+| Pass-the-Hash, LSASS/SAM Credential Dumping, Suspicious Encoded/Download PowerShell, Suspicious Scheduled Task Created, Suspicious Service Installation (Lateral Movement) | `isolate_host` |
+| Everything else (Kerberoasting, AS-REP Roasting, DCSync, Rogue Privileged Account Creation) | `disable_user` (default) |
 
-Unlisted alerts default to `disable_user`. Adding a new detection to containment is one new row
-in this table — no new condition nodes, no edits to existing branches.
+Anything not named explicitly falls through to `disable_user`, so a new detection that should
+disable the user needs no change at all; one that needs a different action is a one-line edit to
+this single formula instead of edits across several condition nodes.
+
+## The exported story
+
+[`your-first-story.json`](your-first-story.json) is the real Tines export, sanitized: the webhook
+secret, `cloudflared` tunnel URL, Wazuh basic-auth value, Jira domain/email and Tines tenant URL
+are replaced with `<<PLACEHOLDERS>>` / `YOUR-...` values, and the long `diagram_layout` string was
+dropped (Tines re-lays out the nodes on import). Secrets that were already Tines credential
+references (`<<CREDENTIAL.jira_api_token>>`, `<<CREDENTIAL.virustotal>>`,
+`<<CREDENTIAL.abuseipdb>>`) are untouched — create credentials with those names in your own
+tenant. Note that this snapshot still contains the original per-branch routing conditions
+(`Route_To_Isolate_Host`, `Bypass_For_PTH`, ...) alongside `Set_Containment_Type`.
 
 ## Rebuilding this story in your own Tines tenant
 

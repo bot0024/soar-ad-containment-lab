@@ -1,0 +1,26 @@
+[WinEventLog://Security]
+index = win_security
+disabled = 0
+evt_resolve_ad_obj = 1
+
+[WinEventLog://System]
+index = win_security
+disabled = 0
+
+[WinEventLog://Application]
+index = win_security
+disabled = 0
+
+[WinEventLog://Directory Service]
+index = win_security
+disabled = 0
+
+[WinEventLog://Microsoft-Windows-PowerShell/Operational]
+index = powershell
+disabled = 0
+
+[WinEventLog://Microsoft-Windows-Sysmon/Operational]
+index = sysmon
+renderXml = true
+source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
+disabled = 0
