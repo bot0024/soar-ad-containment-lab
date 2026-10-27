@@ -1,0 +1,16 @@
+index=win_security EventCode=4768 Pre_Authentication_Type=0 Result_Code=0x0 NOT Account_Name="*$"
+| eval user=lower(replace(Account_Name,"@.*","")),
+       src_ip=replace(Client_Address,"^::ffff:","")
+| stats count as asrep_count min(_time) as first_seen by user src_ip host
+| join type=left src_ip [
+    search index=win_security EventCode=4768 earliest=-24h NOT Account_Name="*$"
+    | eval src_ip=replace(Client_Address,"^::ffff:","")
+    | stats dc(Account_Name) as accounts_probed by src_ip ]
+| fillnull value=0 accounts_probed
+| eval alert_name="AS-REP Roasting",
+       mitre_id="T1558.004",
+       severity="high",
+       service="krbtgt (AS-REP)",
+       context=asrep_count." AS-REP hash response(s) exposed; ".accounts_probed." distinct account(s) probed from this IP in 24h",
+       event_time=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time context

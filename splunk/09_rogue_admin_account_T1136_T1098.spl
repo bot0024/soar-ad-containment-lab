@@ -1,0 +1,21 @@
+(index=win_security EventCode=4720 host=DC01)
+  OR
+(index=win_security EventCode=4728 host=DC01)
+| rex field=_raw "(?s)Subject:.*?Account Name:\s+(?<actor>\S+)"
+| rex field=_raw "(?s)New Account:.*?Account Name:\s+(?<new_account>\S+)"
+| rex field=_raw "(?s)Member:.*?Account Name:\s+CN=(?<added_member>[^,]+)"
+| rex field=_raw "(?s)Group:.*?Group Name:\s+(?<group_name>\S+)"
+| eval target=coalesce(new_account, added_member)
+| where isnotnull(target)
+| bin _time span=5m
+| stats values(EventCode) as event_codes min(_time) as first_seen values(group_name) as groups by target actor host _time
+| where mvcount(event_codes)>=2 OR (mvcount(event_codes)==1 AND match(mvjoin(groups,","), "Admins"))
+| eval alert_name="Rogue Privileged Account Creation",
+       mitre_id="T1136.002",
+       severity="high",
+       user=target,
+       src_ip="N/A",
+       service="Account Creation + Privileged Group Membership",
+       context="Account '".target."' was created and/or added to group(s): ".mvjoin(groups,", ")." by '".actor."' - consistent with backdoor account creation",
+       event_time=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time context

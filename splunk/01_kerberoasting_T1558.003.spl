@@ -1,0 +1,14 @@
+index=win_security EventCode=4769 NOT (Service_Name="krbtgt" OR Service_Name="*$" OR Account_Name="*$@*")
+| eval user=lower(replace(Account_Name, "@.*", "")),
+       src_ip=replace(Client_Address, "^::ffff:", ""),
+       is_rc4=if(Ticket_Encryption_Type="0x17", 1, 0)
+| stats dc(Service_Name) as spn_count, values(Service_Name) as service,
+        max(is_rc4) as rc4_detected, min(_time) as first_seen,
+        latest(_raw) as raw_event by user src_ip host
+| where rc4_detected=1 OR spn_count>=1
+| eval service=mvjoin(service, ", "),
+       alert_name="Kerberoasting",
+       mitre_id="T1558.003",
+       severity=if(rc4_detected=1, "high", "medium"),
+       event_time=strftime(first_seen, "%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time raw_event

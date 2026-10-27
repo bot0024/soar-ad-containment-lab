@@ -1,0 +1,11 @@
+index=win_security EventCode=4662 Object_Type=domainDNS Access_Mask=0x100 NOT Account_Name="*$"
+| stats count min(_time) as first_seen values(Properties) as rights by Account_Name host
+| eval alert_name="DCSync",
+       mitre_id="T1003.006",
+       severity="high",
+       user=Account_Name,
+       src_ip="N/A",
+       service="Directory Replication",
+       context=count." Control Access right(s) used against domainDNS by a non-DC account \u2014 consistent with DCSync replication abuse",
+       event_time=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time context

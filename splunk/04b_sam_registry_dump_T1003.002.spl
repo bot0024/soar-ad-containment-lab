@@ -1,0 +1,10 @@
+index=win_security EventCode=5145 Relative_Target_Name="winreg" NOT Account_Name="*$"
+| eval user=lower(Account_Name), src_ip=Source_Address
+| stats count min(_time) as first_seen by user src_ip host
+| eval alert_name="LSASS/SAM Credential Dumping",
+       mitre_id="T1003.002",
+       severity="high",
+       service="Remote Registry (winreg) access",
+       context=count." remote winreg pipe access(es) - consistent with remote SAM/LSA secrets dumping (e.g. secretsdump, Mimikatz)",
+       event_time=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time context

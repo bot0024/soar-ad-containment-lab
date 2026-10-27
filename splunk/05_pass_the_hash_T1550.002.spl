@@ -1,0 +1,11 @@
+index=win_security EventCode=4624 Authentication_Package=NTLM Logon_Type=3 Account_Name="Administrator"
+| eval src_ip=Source_Network_Address
+| stats count min(_time) as first_seen values(Key_Length) as key_lengths by src_ip host
+| eval alert_name="Pass-the-Hash",
+       mitre_id="T1550.002",
+       severity="high",
+       user="administrator",
+       service="NTLM network logon",
+       context=count." NTLM network logon(s) as Administrator from this IP - NTLM auth for a privileged account is abnormal in a Kerberos-first domain, consistent with Pass-the-Hash",
+       event_time=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time context

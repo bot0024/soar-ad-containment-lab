@@ -1,0 +1,14 @@
+index=powershell EventCode=4104 
+  (Message="*DownloadString*" OR Message="*IEX*" OR Message="*Invoke-Expression*" OR Message="*-enc*" OR Message="*FromBase64String*" OR Message="*DownloadFile*" OR Message="*WebClient*" OR Message="*Net.Sockets*")
+  NOT Message="*Set-StrictMode*"
+| rex field=_raw "ComputerName=(?<src_host>[^\r\n]+)"
+| eval user=lower(replace(User,"NOT_TRANSLATED","unknown"))
+| stats count min(_time) as first_seen values(Message) as sample_commands by host user
+| eval alert_name="Suspicious Encoded/Download PowerShell",
+       mitre_id="T1059.001",
+       severity="high",
+       src_ip="N/A",
+       service="PowerShell Script Block",
+       context="Scriptblock contains download/execution indicators (IEX, DownloadString, WebClient, etc.) - consistent with an encoded dropper or fileless execution attempt",
+       event_time=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time context sample_commands

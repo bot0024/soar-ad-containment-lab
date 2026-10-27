@@ -1,0 +1,12 @@
+index=win_security EventCode=4698 host=DESKTOP-01
+  (_raw="*powershell*" OR _raw="*DownloadString*")
+| eval user=lower(Account_Name)
+| stats count min(_time) as first_seen values(Task_Name) as task_names by host user
+| eval alert_name="Suspicious Scheduled Task Created",
+       mitre_id="T1053.005",
+       severity="high",
+       src_ip="N/A",
+       service="Scheduled Task Persistence",
+       context="A scheduled task was created containing a PowerShell/cmd execution payload - consistent with persistence via Task Scheduler",
+       event_time=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time context task_names

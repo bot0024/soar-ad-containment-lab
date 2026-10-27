@@ -1,0 +1,3 @@
+index=sysmon EventCode=10 TargetImage="*lsass.exe*" earliest=-10m
+| table _time host SourceImage TargetImage GrantedAccess SourceProcessId
+| sort - _time

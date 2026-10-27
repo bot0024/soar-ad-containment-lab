@@ -1,0 +1,14 @@
+index=win_security EventCode=7045 host=DESKTOP-01
+| regex Service_Name="^[A-Za-z]{4}$"
+| regex Service_File_Name="\\\\[A-Za-z]{8}\.exe$"
+| eval host=host
+| stats count min(_time) as first_seen values(Service_Name) as service_names values(Service_File_Name) as binary_paths by host
+| eval alert_name="Suspicious Service Installation (Lateral Movement)",
+       mitre_id="T1021.002",
+       severity="high",
+       user="unknown",
+       src_ip="N/A",
+       service="SMB-based remote service installation",
+       context="Service with randomly-generated name '".mvjoin(service_names,", ")."' installed via ADMIN$ share (binary: ".mvjoin(binary_paths,", ").") - consistent with PsExec-style lateral movement",
+       event_time=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| table alert_name mitre_id severity user host src_ip service event_time context
