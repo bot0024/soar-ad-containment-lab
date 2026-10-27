@@ -32,18 +32,25 @@ never exposed to a real network.
 
 ## The 10 techniques
 
-| # | Technique | MITRE ID | Detection | Containment |
+Names match the saved searches exactly as they're titled in Splunk (**SOC - \<name\>**), all scheduled `*/5 * * * *`:
+
+| # | Splunk saved search | MITRE ID | Detection | Containment |
 | --- | --- | --- | --- | --- |
-| 1 | Kerberoasting | T1558.003 | [`splunk/01_kerberoasting_T1558.003.spl`](splunk/01_kerberoasting_T1558.003.spl) | `disable_user` |
-| 2 | AS-REP Roasting | T1558.004 | [`splunk/02_asrep_roasting_T1558.004.spl`](splunk/02_asrep_roasting_T1558.004.spl) | `disable_user` |
-| 3 | DCSync | T1003.006 | [`splunk/03_dcsync_T1003.006.spl`](splunk/03_dcsync_T1003.006.spl) | `isolate_host` |
-| 4 | LSASS/SAM Credential Dumping | T1003.002 | [`splunk/04a_lsass_dump_sysmon_T1003.002.spl`](splunk/04a_lsass_dump_sysmon_T1003.002.spl), [`04b_sam_registry_dump_T1003.002.spl`](splunk/04b_sam_registry_dump_T1003.002.spl) | `isolate_host` |
-| 5 | Pass-the-Hash | T1550.002 | [`splunk/05_pass_the_hash_T1550.002.spl`](splunk/05_pass_the_hash_T1550.002.spl) | `disable_user` |
-| 6 | Suspicious Encoded/Download PowerShell | T1059.001 | [`splunk/06_suspicious_powershell_T1059.001.spl`](splunk/06_suspicious_powershell_T1059.001.spl) | `isolate_host` |
-| 7 | Suspicious Scheduled Task Created | T1053.005 | [`splunk/07_scheduled_task_T1053.005.spl`](splunk/07_scheduled_task_T1053.005.spl) | `disable_user` |
-| 8 | Password Spraying | T1110 | [`splunk/08_password_spraying_T1110.spl`](splunk/08_password_spraying_T1110.spl) | `block_ip` |
-| 9 | Rogue Admin Account Creation | T1136 / T1098 | [`splunk/09_rogue_admin_account_T1136_T1098.spl`](splunk/09_rogue_admin_account_T1136_T1098.spl) | `disable_user` |
-| 10 | Lateral Movement via PsExec | T1021.002 | [`splunk/10_psexec_lateral_movement_T1021.002.spl`](splunk/10_psexec_lateral_movement_T1021.002.spl) | `isolate_host` |
+| 1 | SOC - Kerberoasting | T1558.003 | [`splunk/01_kerberoasting_T1558.003.spl`](splunk/01_kerberoasting_T1558.003.spl) | `disable_user` |
+| 2 | SOC - AS-REP Roasting | T1558.004 | [`splunk/02_asrep_roasting_T1558.004.spl`](splunk/02_asrep_roasting_T1558.004.spl) | `disable_user` |
+| 3 | SOC - DCSync | T1003.006 | [`splunk/03_dcsync_T1003.006.spl`](splunk/03_dcsync_T1003.006.spl) | `isolate_host` |
+| 4 | SOC - Credential Dumping via Remote Registry | T1003.002 | [`splunk/04_credential_dumping_remote_registry_T1003.002.spl`](splunk/04_credential_dumping_remote_registry_T1003.002.spl) | `isolate_host` |
+| 5 | SOC - Pass-the-Hash | T1550.002 | [`splunk/05_pass_the_hash_T1550.002.spl`](splunk/05_pass_the_hash_T1550.002.spl) | `disable_user` |
+| 6 | SOC - Encoded PowerShell Execution | T1059.001 | [`splunk/06_encoded_powershell_execution_T1059.001.spl`](splunk/06_encoded_powershell_execution_T1059.001.spl) | `isolate_host` |
+| 7 | SOC - Scheduled Task Persistence | T1053.005 | [`splunk/07_scheduled_task_persistence_T1053.005.spl`](splunk/07_scheduled_task_persistence_T1053.005.spl) | `disable_user` |
+| 8 | SOC - Password Spraying | T1110.003 | [`splunk/08_password_spraying_T1110.003.spl`](splunk/08_password_spraying_T1110.003.spl) | `block_ip` |
+| 9 | SOC - Rogue Privileged Account Creation | T1136.002 | [`splunk/09_rogue_privileged_account_creation_T1136.002.spl`](splunk/09_rogue_privileged_account_creation_T1136.002.spl) | `disable_user` |
+| 10 | SOC - Lateral Movement via PsExec | T1021.002 | [`splunk/10_psexec_lateral_movement_T1021.002.spl`](splunk/10_psexec_lateral_movement_T1021.002.spl) | `isolate_host` |
+
+[`splunk/04a_lsass_access_supplementary_sysmon_T1003.002.spl`](splunk/04a_lsass_access_supplementary_sysmon_T1003.002.spl)
+is a supplementary Sysmon-based LSASS-access query for the same technique (T1003.002) — it's not
+one of the 10 scheduled saved searches above, just an additional detection angle documented
+alongside it.
 
 Every search posts a normalized JSON payload to the same Tines webhook (`alert_name`,
 `mitre_id`, `severity`, `user`, `host`, `src_ip`, `event_time`) — that shared schema is what
