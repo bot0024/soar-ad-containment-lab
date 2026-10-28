@@ -23,12 +23,12 @@ pipeline wired to Wazuh active response. Full write-up: [`/docs`](docs).
 | --- | --- | --- |
 | Attack | Kali Linux (`10.0.0.8`) | Runs all 10 attacks (Impacket, mostly) against the domain |
 | Targets | Windows Server 2025 DC — `hackme.local` (`10.0.0.10`) · Windows 10 `DESKTOP-01` (`10.0.0.4`) | Generate Security, Sysmon, PowerShell logs |
-| Collection | Windows Event Forwarding + Sysmon (Olaf's modular config) | Ships logs into Splunk |
+| Collection | Splunk Universal Forwarder on the DC and endpoint (`inputs.conf` in [`/splunk/inputs`](splunk/inputs)) + Sysmon (Olaf's modular config) | Ships Security, Sysmon and PowerShell logs into Splunk |
 | Detection | Splunk Enterprise, indexes `win_security` / `sysmon` / `powershell` / `wazuh` | One scheduled search per technique, each posting a normalized alert to a webhook |
 | Orchestration | Tines | Classifies the alert, opens/dedupes a Jira incident, decides containment in one decision node (`Set_Containment_Type`), with Jira-based approval and dedup |
 | Containment | Wazuh active response (`10.0.0.9`), reached over a `cloudflared` tunnel | Executes `disable_user`, `block_ip`, or `isolate_host` |
 
-All 10 VMs/services sit on one isolated VirtualBox NAT network, `10.0.0.0/24` — this lab was
+Every VM (DC, endpoint, Kali, Splunk, Wazuh) sits on one isolated VirtualBox NAT network, `10.0.0.0/24` — this lab was
 never exposed to a real network.
 
 ## The 10 techniques
@@ -105,17 +105,19 @@ pipeline, not synthetic Tines test events — covering all three containment typ
    [`sysmon-modular`](https://github.com/olafhartong/sysmon-modular) config, and enable
    PowerShell Script Block Logging (4104) — on both the DC and the endpoint.
 3. **Stand up Splunk.** Create the four indexes (`win_security`, `sysmon`, `powershell`,
-   `wazuh`), install a forwarder on both Windows boxes, and confirm events are landing with
+   `wazuh`), install the Universal Forwarder on both Windows boxes using the matching `inputs.conf` from [`/splunk/inputs`](splunk/inputs), and confirm events are landing with
    `index=win_security | stats count by host, EventCode`.
 4. **Add the 10 detections.** One scheduled saved search per technique from [`/splunk`](splunk),
    each firing every 5 minutes (`*/5 * * * *`) and posting its result to a Tines webhook URL via
    an alert action.
-5. **Build the Tines story.** Webhook in, one condition per `alert_name`, Jira incident
-   creation/dedup, the `Set_Containment_Type` decision node, and three containment branches —
-   see [`/tines`](tines) for the exact wiring.
-6. **Wire Wazuh.** Install the Wazuh agent on the DC and endpoint, write the three
-   active-response scripts (`disable-ad-user.cmd`, a firewall-block action, `isolate-host.ps1`),
-   and expose the Wazuh API to Tines through a `cloudflared` tunnel — see [`/wazuh`](wazuh).
+5. **Build the Tines story.** Easiest: import [`tines/your-first-story.json`](tines/your-first-story.json),
+   create the credentials/resource it lists, and set the Jira project key and the two approval
+   statuses (*Containment Approved* / *Containment Rejected*). It contains the webhook, per-alert
+   conditions, IP enrichment, Jira dedup/incident creation, the `Set_Containment_Type` decision
+   node, the approval loop and the three containment branches — see [`/tines`](tines).
+6. **Wire Wazuh.** Install the Wazuh agent on the DC and endpoint, copy the three
+   active-response scripts from [`/wazuh/active-response`](wazuh/active-response)
+   (`disable-ad-user`, `block-ip`, `isolate-host`), and expose the Wazuh API to Tines through a `cloudflared` tunnel — see [`/wazuh`](wazuh).
 7. **Attack and verify.** Run each technique from Kali, confirm the Splunk search fires, the
    Jira ticket opens, and the correct containment action executes. Clean up test accounts/rules
    between runs (see [`/wazuh`](wazuh) for the rollback commands).
@@ -123,15 +125,14 @@ pipeline, not synthetic Tines test events — covering all three containment typ
 ### A note on secrets
 
 Nothing in this repo contains live credentials, API keys, or the `cloudflared` tunnel URL — all
-of those are placeholders (`<<WAZUH_API_TOKEN>>`, `YOUR-TUNNEL.trycloudflare.com`, etc.). If
+of those are placeholders (`<<WEBHOOK_SECRET>>`, `YOUR-TUNNEL.trycloudflare.com`, `YOUR-DOMAIN.atlassian.net`, etc.). If
 you're adapting this for your own lab, generate your own Tines/Jira/Wazuh credentials; nothing
 here is reusable as-is, which is the point.
 
 ## Full write-up
 
 The complete report — architecture, all 10 detections, the routing rebuild in detail, test
-results, and lessons learned — is in [`/docs`](docs) as a PDF. A narrative version is on
-[Medium](#) *(link added once published)*.
+results, and lessons learned — is in [`/docs`](docs) as a PDF. A narrative version will be published on Medium (link added here once it's live).
 
 ## License
 
