@@ -11,6 +11,7 @@ pipeline wired to Wazuh active response. Full write-up: [`/docs`](docs).
 | Folder | Contents |
 | --- | --- |
 | [`/docs`](docs) | The full lab report (PDF) and the architecture/network diagram |
+| [`ATTACKS.md`](ATTACKS.md) | The Kali Linux command used for each of the 10 attacks |
 | [`/splunk`](splunk) | The final Splunk search (`.spl`) for each of the 10 detections, plus the Universal Forwarder `inputs.conf` files ([`/splunk/inputs`](splunk/inputs)) |
 | [`/tines`](tines) | The Tines story structure, the `Set_Containment_Type` decision node, the sanitized story export, and before/after screenshots of the routing rebuild |
 | [`/wazuh`](wazuh) | The Wazuh active-response scripts ([`/wazuh/active-response`](wazuh/active-response): `disable-ad-user`, `block-ip`, `isolate-host`) and how the API flow is wired |
@@ -34,6 +35,8 @@ never exposed to a real network.
 ## The 10 techniques
 
 Names match the saved searches exactly as they're titled in Splunk (**SOC - \<name\>**), all scheduled `*/5 * * * *`:
+
+The exact Kali Linux command used for each attack is in [`ATTACKS.md`](ATTACKS.md).
 
 | # | Splunk saved search | MITRE ID | Detection | Containment |
 | --- | --- | --- | --- | --- |
