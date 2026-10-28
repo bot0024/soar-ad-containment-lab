@@ -48,11 +48,6 @@ Names match the saved searches exactly as they're titled in Splunk (**SOC - \<na
 | 9 | SOC - Rogue Privileged Account Creation | T1136.002 | [`splunk/09_rogue_privileged_account_creation_T1136.002.spl`](splunk/09_rogue_privileged_account_creation_T1136.002.spl) | `disable_user` |
 | 10 | SOC - Lateral Movement via PsExec | T1021.002 | [`splunk/10_psexec_lateral_movement_T1021.002.spl`](splunk/10_psexec_lateral_movement_T1021.002.spl) | `isolate_host` |
 
-[`splunk/04a_lsass_access_supplementary_sysmon_T1003.002.spl`](splunk/04a_lsass_access_supplementary_sysmon_T1003.002.spl)
-is a supplementary Sysmon-based LSASS-access query for the same technique (T1003.002) — it's not
-one of the 10 scheduled saved searches above, just an additional detection angle documented
-alongside it.
-
 Every search posts a normalized JSON payload to the same Tines webhook (`alert_name`,
 `mitre_id`, `severity`, `user`, `host`, `src_ip`, `event_time`) — that shared schema is what
 lets one decision node route all ten.
