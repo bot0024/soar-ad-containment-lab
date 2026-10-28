@@ -11,6 +11,10 @@ disabled = 0
 index = win_security
 disabled = 0
 
+[WinEventLog://Microsoft-Windows-PowerShell/Operational]
+index = powershell
+disabled = 0
+
 [WinEventLog://Microsoft-Windows-Sysmon/Operational]
 index = sysmon
 renderXml = true
