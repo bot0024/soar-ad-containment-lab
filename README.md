@@ -12,6 +12,7 @@ pipeline wired to Wazuh active response. Full write-up: [`/docs`](docs).
 | --- | --- |
 | [`/docs`](docs) | The full lab report (PDF) and the architecture/network diagram |
 | [`ATTACKS.md`](ATTACKS.md) | The Kali Linux command used for each of the 10 attacks |
+| [`WINDOWS-AUDIT-POLICY.md`](WINDOWS-AUDIT-POLICY.md) | The GPO audit policy, PowerShell logging and DCSync auditing config each detection depends on |
 | [`/splunk`](splunk) | The final Splunk search (`.spl`) for each of the 10 detections, plus the Universal Forwarder `inputs.conf` files ([`/splunk/inputs`](splunk/inputs)) |
 | [`/tines`](tines) | The Tines story structure, the `Set_Containment_Type` decision node, the sanitized story export, and before/after screenshots of the routing rebuild |
 | [`/wazuh`](wazuh) | The Wazuh active-response scripts ([`/wazuh/active-response`](wazuh/active-response): `disable-ad-user`, `block-ip`, `isolate-host`) and how the API flow is wired |
@@ -103,10 +104,11 @@ pipeline, not synthetic Tines test events — covering all three containment typ
    Domain-join `DESKTOP-01`. All four VMs (DC, endpoint, Kali, Wazuh) plus the Splunk VM share
    one VirtualBox NAT Network — pick a DHCP range (this lab used `10.0.0.20`–`10.0.0.100`) and
    assign static-ish addresses outside it for the servers.
-2. **Turn on logging.** Enable Windows Security auditing (Advanced Audit Policy via GPO, enough
-   to cover 4624/4625/4662/4688/4698/4720/4728/4768/4769/5145/7036/7040/7045), install Olaf's
-   [`sysmon-modular`](https://github.com/olafhartong/sysmon-modular) config, and enable
-   PowerShell Script Block Logging (4104) — on both the DC and the endpoint.
+2. **Turn on logging.** Apply the full GPO audit policy, PowerShell Script Block Logging, and
+   the DCSync auditing entry — see [`WINDOWS-AUDIT-POLICY.md`](WINDOWS-AUDIT-POLICY.md) for the
+   exact subcategories and steps. Install Olaf's
+   [`sysmon-modular`](https://github.com/olafhartong/sysmon-modular) config on both the DC and
+   the endpoint.
 3. **Stand up Splunk.** Create the four indexes (`win_security`, `sysmon`, `powershell`,
    `wazuh`), install the Universal Forwarder on both Windows boxes using the matching `inputs.conf` from [`/splunk/inputs`](splunk/inputs), and confirm events are landing with
    `index=win_security | stats count by host, EventCode`.
