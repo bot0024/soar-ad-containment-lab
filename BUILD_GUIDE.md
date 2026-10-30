@@ -35,7 +35,7 @@ IP, or isolates a host — automatically, based on what fired.
    | DC01 | `10.0.0.10` | Windows Server 2025, domain controller for `hackme.local` |
    | DESKTOP-01 | `10.0.0.4` | Windows 10 endpoint, domain-joined |
    | Kali | `10.0.0.8` | Attack box |
-   | Splunk | — | Linux VM running Splunk Enterprise |
+   | Splunk | `10.0.0.7` | Linux VM running Splunk Enterprise |
    | Wazuh | `10.0.0.9` | Linux VM running the Wazuh manager |
 
 2. Install all five VMs with their OS, attached only to the isolated network.
