@@ -13,6 +13,7 @@ pipeline wired to Wazuh active response. Full write-up: [`/docs`](docs).
 | [`/docs`](docs) | The full lab report (PDF) and the architecture/network diagram |
 | [`ATTACKS.md`](ATTACKS.md) | The Kali Linux command used for each of the 10 attacks |
 | [`WINDOWS-AUDIT-POLICY.md`](WINDOWS-AUDIT-POLICY.md) | The GPO audit policy, PowerShell logging and DCSync auditing config each detection depends on |
+| [`BUILD_GUIDE.md`](BUILD_GUIDE.md) | Full step-by-step guide: build the entire lab from an empty hypervisor to all 10 detections containing automatically |
 | [`/splunk`](splunk) | The final Splunk search (`.spl`) for each of the 10 detections, plus the Universal Forwarder `inputs.conf` files ([`/splunk/inputs`](splunk/inputs)) |
 | [`/tines`](tines) | The Tines story structure, the `Set_Containment_Type` decision node, the sanitized story export, and before/after screenshots of the routing rebuild |
 | [`/wazuh`](wazuh) | The Wazuh active-response scripts ([`/wazuh/active-response`](wazuh/active-response): `disable-ad-user`, `block-ip`, `isolate-host`) and how the API flow is wired |
@@ -88,9 +89,13 @@ pipeline, not synthetic Tines test events — covering all three containment typ
 
 ## Build it yourself
 
+**[`BUILD_GUIDE.md`](BUILD_GUIDE.md) has the full step-by-step walkthrough** — network/VM setup,
+Active Directory, the Windows audit policy, Splunk, the Tines story, Wazuh, and end-to-end
+testing. Short version:
+
 ### Prerequisites
 
-- VirtualBox (or any hypervisor) with one NAT Network shared by every VM
+- VirtualBox (or any hypervisor) with one isolated NAT Network shared by every VM
 - Windows Server 2025 (Domain Controller) and Windows 10 (endpoint) ISOs
 - Kali Linux (attack box)
 - Splunk Enterprise (free dev license is enough)
@@ -100,39 +105,20 @@ pipeline, not synthetic Tines test events — covering all three containment typ
 
 ### Steps
 
-1. **Stand up the domain.** Promote the Windows Server 2025 VM to a DC for `hackme.local`.
-   Domain-join `DESKTOP-01`. All four VMs (DC, endpoint, Kali, Wazuh) plus the Splunk VM share
-   one VirtualBox NAT Network — pick a DHCP range (this lab used `10.0.0.20`–`10.0.0.100`) and
-   assign static-ish addresses outside it for the servers.
-2. **Turn on logging.** Apply the full GPO audit policy, PowerShell Script Block Logging, and
-   the DCSync auditing entry — see [`WINDOWS-AUDIT-POLICY.md`](WINDOWS-AUDIT-POLICY.md) for the
-   exact subcategories and steps. Install Olaf's
-   [`sysmon-modular`](https://github.com/olafhartong/sysmon-modular) config on both the DC and
-   the endpoint.
-3. **Stand up Splunk.** Create the four indexes (`win_security`, `sysmon`, `powershell`,
-   `wazuh`), install the Universal Forwarder on both Windows boxes using the matching `inputs.conf` from [`/splunk/inputs`](splunk/inputs), and confirm events are landing with
-   `index=win_security | stats count by host, EventCode`.
-4. **Add the 10 detections.** One scheduled saved search per technique from [`/splunk`](splunk),
-   each firing every 5 minutes (`*/5 * * * *`) and posting its result to a Tines webhook URL via
-   an alert action.
-5. **Build the Tines story.** Easiest: import [`tines/your-first-story.json`](tines/your-first-story.json),
-   create the credentials/resource it lists, and set the Jira project key and the two approval
-   statuses (*Containment Approved* / *Containment Rejected*). It contains the webhook, per-alert
-   conditions, IP enrichment, Jira dedup/incident creation, the `Set_Containment_Type` decision
-   node, the approval loop and the three containment branches — see [`/tines`](tines).
-6. **Wire Wazuh.** Install the Wazuh agent on the DC and endpoint, copy the three
-   active-response scripts from [`/wazuh/active-response`](wazuh/active-response)
-   (`disable-ad-user`, `block-ip`, `isolate-host`), and expose the Wazuh API to Tines through a `cloudflared` tunnel — see [`/wazuh`](wazuh).
-7. **Attack and verify.** Run each technique from Kali, confirm the Splunk search fires, the
-   Jira ticket opens, and the correct containment action executes. Clean up test accounts/rules
-   between runs (see [`/wazuh`](wazuh) for the rollback commands).
+1. Stand up the domain and the network — [`BUILD_GUIDE.md` step 1–2](BUILD_GUIDE.md#step-1--build-the-network-and-vms).
+2. Turn on logging: GPO audit policy, PowerShell logging, Sysmon — [`WINDOWS-AUDIT-POLICY.md`](WINDOWS-AUDIT-POLICY.md).
+3. Stand up Splunk, ship logs with the Universal Forwarder — [`/splunk/inputs`](splunk/inputs).
+4. Add the 10 detections — [`/splunk`](splunk).
+5. Build the Tines story by importing [`tines/your-first-story.json`](tines/your-first-story.json) — [`/tines`](tines).
+6. Wire Wazuh active response behind a `cloudflared` tunnel — [`/wazuh`](wazuh).
+7. Attack from Kali and verify — [`ATTACKS.md`](ATTACKS.md).
 
 ### A note on secrets
 
 Nothing in this repo contains live credentials, API keys, or the `cloudflared` tunnel URL — all
-of those are placeholders (`<<WEBHOOK_SECRET>>`, `YOUR-TUNNEL.trycloudflare.com`, `YOUR-DOMAIN.atlassian.net`, etc.). If
-you're adapting this for your own lab, generate your own Tines/Jira/Wazuh credentials; nothing
-here is reusable as-is, which is the point.
+of those are placeholders (`<<WEBHOOK_SECRET>>`, `YOUR-TUNNEL.trycloudflare.com`,
+`YOUR-DOMAIN.atlassian.net`, etc.). If you're adapting this for your own lab, generate your own
+Tines/Jira/Wazuh credentials; nothing here is reusable as-is, which is the point.
 
 ## Full write-up
 
