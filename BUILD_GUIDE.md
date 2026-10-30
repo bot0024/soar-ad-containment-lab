@@ -127,10 +127,47 @@ On **DC01**:
 4. On **DESKTOP-01**: **Settings > System > About > Domain or workgroup** (or
    `System Properties > Computer Name > Change`) → join domain `hackme.local` → reboot → log in
    with a domain account.
-5. In **Active Directory Users and Computers** on DC01, create the accounts this lab's
-   detections and attacks use: an ordinary domain user, and a service account with an SPN (used
-   by the Kerberoasting detection — see [`WINDOWS-AUDIT-POLICY.md`](WINDOWS-AUDIT-POLICY.md) for
-   the exact encryption-type setting it needs).
+5. **Create the four accounts this lab's attacks and detections use.** In **Active Directory
+   Users and Computers** on DC01 (or PowerShell, below), create them in the default `Users`
+   container:
+
+   | Account | Type | Used for |
+   | --- | --- | --- |
+   | `lab_dip` | Ordinary domain user | The "attacker-controlled" identity for most attacks — this lab made it a Domain Admin so it also has the rights attack #9 needs (creating users, adding to Domain Admins); don't do this outside an isolated lab |
+   | `svc_sql` | Service account | Target of the Kerberoasting detection — needs an SPN and a specific encryption-type setting |
+   | `svc_lab` | Service account | Target of the DCSync detection — needs directory-replication rights delegated to it |
+   | `Administrator` | Built-in | Target of the Pass-the-Hash attack — no setup needed, it already exists |
+
+   PowerShell, run on DC01:
+
+   ```powershell
+   # ordinary attacker-controlled user, made a Domain Admin for lab convenience
+   New-ADUser -Name "lab_dip" -SamAccountName "lab_dip" -AccountPassword (Read-Host -AsSecureString "Password") -Enabled $true
+   Add-ADGroupMember -Identity "Domain Admins" -Members "lab_dip"
+
+   # service accounts
+   New-ADUser -Name "svc_sql" -SamAccountName "svc_sql" -AccountPassword (Read-Host -AsSecureString "Password") -Enabled $true
+   New-ADUser -Name "svc_lab" -SamAccountName "svc_lab" -AccountPassword (Read-Host -AsSecureString "Password") -Enabled $true
+   ```
+
+   Give `svc_sql` an SPN (makes it Kerberoastable) and the encryption types the attack/detection
+   pair needs — full explanation in
+   [`WINDOWS-AUDIT-POLICY.md`](WINDOWS-AUDIT-POLICY.md#encryption-type-fix-for-kerberoasting-svc_sql):
+
+   ```powershell
+   setspn -A HTTP/sql.hackme.local svc_sql
+   Set-ADUser svc_sql -Replace @{'msDS-SupportedEncryptionTypes'=28}
+   ```
+
+   Delegate directory-replication rights to `svc_lab` (required for the DCSync attack and the
+   4662 event the detection looks for) — **Active Directory Users and Computers** → *View >
+   Advanced Features* → right-click **hackme.local > Properties > Security > Add** → add
+   `svc_lab` → tick **Replicating Directory Changes** and **Replicating Directory Changes All**
+   under Allow. (This is the same auditing dialog used in
+   [`WINDOWS-AUDIT-POLICY.md` step 7](WINDOWS-AUDIT-POLICY.md#7-dcsync-auditing-required-for-event-4662)
+   — here you're granting the *permission*, there you're adding the *audit entry* that logs its
+   use; both go on the same object.)
+
 6. Sync time on the DC (`w32tm`) — Kerberos breaks past 5 minutes of clock skew. Details in
    [`WINDOWS-AUDIT-POLICY.md`](WINDOWS-AUDIT-POLICY.md).
 
